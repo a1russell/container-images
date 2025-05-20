@@ -1,0 +1,29 @@
+#!/bin/sh
+
+fetch_latest_github_release() {
+	reponame=$1
+	curl --silent "https://api.github.com/repos/$reponame/releases/latest" \
+	| grep '"tag_name":' \
+	| sed --regexp-extended 's/.*"([^"]+)".*/\1/'
+}
+
+fetch_latest_tag() {
+	repourl=$1
+	filter=$2
+	git -c 'versionsort.suffix=-' ls-remote --tags --exit-code --refs --sort=-v:refname \
+		$repourl "$filter" \
+	| sed --regexp-extended --quiet '1!q;s/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/gp'
+}
+
+fetch_latest_tag_grep() {
+	repourl=$1
+	filter=$2
+	git -c 'versionsort.suffix=-' ls-remote --tags --exit-code --refs --sort=-v:refname \
+		$repourl \
+	| sed --regexp-extended --quiet 's/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/gp' \
+	| grep --extended-regexp $filter \
+	| head --lines=1
+}
+
+echo git-plus; fetch_latest_tag https://github.com/tkrajina/git-plus.git 'v*'; echo
+echo starship; fetch_latest_github_release starship/starship; echo
