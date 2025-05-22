@@ -1,0 +1,3 @@
+#!/bin/sh
+. /sbin/dockerd-entrypoint.sh
+exec "$@"

@@ -3,3 +3,6 @@ build-dev-ubuntu:
 
 build-container-image-dev-ubuntu:
 	docker build --target docker_cli --tag a1russell/container-image-dev-ubuntu src/
+
+build-dind-ubuntu:
+	docker build --target docker --tag a1russell/dind-ubuntu src/
