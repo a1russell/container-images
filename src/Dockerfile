@@ -112,3 +112,48 @@ COPY files/etc/zsh/zshrc.d/01--znap-repos.zsh /etc/zsh/zshrc.d/
 COPY --chmod=755 files/sbin/entrypoint /sbin/
 ENTRYPOINT ["/usr/bin/tini", "--", "/sbin/entrypoint"]
 CMD ["/bin/zsh"]
+
+FROM dev_base_image AS docker_cli
+
+# Ensure that nsswitch.conf is set up for Go's "netgo" implementation (which Docker explicitly uses).
+# - https://github.com/moby/moby/blob/v24.0.6/hack/make.sh#L111
+# - https://github.com/golang/go/blob/go1.19.13/src/net/conf.go#L227-L303
+RUN [ -e /etc/nsswitch.conf ] && grep '^hosts: \+files dns' /etc/nsswitch.conf
+
+# Pre-add a "docker" group for socket usage.
+RUN <<EOF
+set -o errexit -o nounset -o xtrace
+addgroup --system --gid 2375 docker
+EOF
+
+RUN <<EOF
+set -o errexit
+curl --silent --show-error --fail --location https://download.docker.com/linux/ubuntu/gpg \
+	--output /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo \
+	"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+	$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" \
+	| tee /etc/apt/sources.list.d/docker.list > /dev/null
+/usr/sbin/install_clean \
+	docker-ce-cli \
+	docker-buildx-plugin \
+	docker-compose-plugin
+EOF
+
+# https://github.com/docker-library/docker/pull/166
+#   dockerd-entrypoint.sh uses DOCKER_TLS_CERTDIR for auto-generating TLS certificates
+#   docker-entrypoint.sh uses DOCKER_TLS_CERTDIR for auto-setting DOCKER_TLS_VERIFY and DOCKER_CERT_PATH
+# (For this to work, at least the "client" subdirectory of this path needs to be shared between the client and server containers via a volume, "docker cp", or other means of data sharing.)
+ENV DOCKER_TLS_CERTDIR=/certs
+RUN <<EOF
+set -o errexit
+# also, ensure the directory pre-exists and has wide enough permissions for "dockerd-entrypoint.sh" to create subdirectories, even when run in "rootless" mode
+mkdir --parents /certs/client
+chmod 1777 /certs /certs/client
+# (doing both /certs and /certs/client so that if Docker does a "copy-up" into a volume defined on /certs/client, it will "do the right thing" by default in a way that still works for rootless users)
+EOF
+
+COPY --chmod=644 files/sbin/docker-entrypoint.sh /sbin/
+COPY --chmod=755 files/sbin/docker-entrypoint /sbin/
+RUN ln --symbolic /sbin/docker-entrypoint.sh /etc/entrypoint.d/docker.sh
