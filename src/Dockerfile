@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 
 ARG git_plus_version=v0.4.10
+ARG starship_version=v1.23.0
 
-FROM ubuntu:25.04 AS updated_ubuntu
+FROM ubuntu:24.04 AS updated_ubuntu
 
 RUN <<EOF
 set -o errexit
@@ -43,7 +44,6 @@ RUN /usr/sbin/install_clean \
 	git-annex \
 	git-doc \
 	git-lfs \
-	git-subrepo \
 	gzip \
 	jo \
 	jq \
@@ -54,7 +54,6 @@ RUN /usr/sbin/install_clean \
 	neovim \
 	openssh-client \
 	ripgrep \
-	starship \
 	unrar \
 	xclip \
 	xz-utils \
@@ -95,6 +94,23 @@ RUN <<EOF
 . /root/.profile.d/uv.sh
 uv tool install --no-managed-python --no-cache git-plus@$git_plus_version
 EOF
+
+COPY files/opt/git-subrepo /opt/git-subrepo
+RUN \
+	ln --symbolic /opt/git-subrepo/.rc /etc/profile.d/50--git-subrepo.sh; \
+	mkdir --parents /usr/local/share/man/man1; \
+	ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
+
+ARG starship_version
+RUN \
+	mkdir --parents /tmp/starship_$starship_version; \
+	curl --silent --show-error --location --fail \
+		--output /tmp/starship_$starship_version/starship.tar.gz \
+		https://github.com/starship/starship/releases/download/$starship_version/starship-x86_64-unknown-linux-gnu.tar.gz; \
+	tar --extract --gzip --file=/tmp/starship_$starship_version/starship.tar.gz --directory=/tmp/starship_$starship_version; \
+	cp /tmp/starship_$starship_version/starship /usr/local/bin/starship; \
+	chmod 755 /usr/local/bin/starship; \
+	rm --recursive --force /tmp/starship_$starship_version
 
 RUN mkdir --parents /etc/zsh/zshrc.d
 COPY files/etc/zsh/zshrc.d/80--aliases.zsh /etc/zsh/zshrc.d/
