@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:a1russell/container-image-devcontainer.git
+	branch = master
+	commit = d6b4e5a1dad0b3f3a830abf46aa8b4c2eecbaf87
+	parent = 636931d0e46d58a664698ad11955eb96bdf0a802
+	method = merge
+	cmdver = 0.4.1
