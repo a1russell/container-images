@@ -172,11 +172,11 @@ EOF
 
 COPY --chmod=644 files/sbin/docker-entrypoint.sh /sbin/
 COPY --chmod=755 files/sbin/docker-entrypoint /sbin/
-RUN ln --symbolic /sbin/docker-entrypoint.sh /etc/entrypoint.d/docker.sh
+RUN ln --symbolic /sbin/docker-entrypoint.sh /etc/entrypoint.d/49-docker.sh
 
 FROM docker_cli AS docker
 
-RUN rm /etc/entrypoint.d/docker.sh
+RUN rm /etc/entrypoint.d/49-docker.sh
 
 # https://github.com/moby/moby/blob/0eecd59153c03ced5f5ddd79cc98f29e4d86daec/project/PACKAGERS.md#runtime-dependencies
 # https://github.com/docker/docker-ce-packaging/blob/963aa02666035d4e268f33c63d7868d6cdd1d34c/deb/common/control#L28-L41
@@ -211,5 +211,5 @@ EXPOSE 2375 2376
 
 COPY --chmod=644 files/sbin/dockerd-entrypoint.sh /sbin/
 COPY --chmod=755 files/sbin/dockerd-entrypoint /sbin/
-RUN ln --symbolic /sbin/dockerd-entrypoint.sh /etc/entrypoint.d/dockerd.sh
+RUN ln --symbolic /sbin/dockerd-entrypoint.sh /etc/entrypoint.d/49-dockerd.sh
 CMD []
