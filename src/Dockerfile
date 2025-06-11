@@ -2,6 +2,10 @@
 
 ARG git_plus_version=v0.4.10
 ARG starship_version=v1.23.0
+ARG k0s_version=v1.33.1+k0s.1
+ARG skaffold_version=v2.16.0
+ARG kustomize_version=v5.6.0
+ARG k9s_version=v0.50.6
 
 FROM ubuntu:24.04 AS updated_ubuntu
 
@@ -213,3 +217,53 @@ COPY --chmod=644 files/sbin/dockerd-entrypoint.sh /sbin/
 COPY --chmod=755 files/sbin/dockerd-entrypoint /sbin/
 RUN ln --symbolic /sbin/dockerd-entrypoint.sh /etc/entrypoint.d/49-dockerd.sh
 CMD []
+
+FROM docker_cli AS k8s
+
+ARG k0s_version
+RUN <<EOF
+enc_ver=$(jq --raw-output --null-input --arg _ "$k0s_version" '$_ | @uri')
+curl --silent --show-error --location --fail \
+	--output /usr/local/bin/k0s \
+	https://github.com/k0sproject/k0s/releases/download/$enc_ver/k0s-$enc_ver-amd64
+chmod 755 /usr/local/bin/k0s
+mkdir --parents /etc/k0s
+/usr/local/bin/k0s config create > /etc/k0s/k0s.yaml
+EOF
+COPY --chmod=755 files/usr/local/bin/kubectl /usr/local
+COPY --chmod=644 files/sbin/k0s.sh /sbin/
+RUN ln --symbolic /sbin/k0s.sh /etc/entrypoint.d/48-k0s.sh
+
+ARG skaffold_version
+RUN <<EOF
+curl --silent --show-error --location --fail \
+	--output /usr/local/bin/skaffold \
+	https://storage.googleapis.com/skaffold/releases/$skaffold_version/skaffold-linux-amd64
+chmod 755 /usr/local/bin/skaffold
+EOF
+
+##region(collapsed) kustomize
+ARG kustomize_version
+RUN <<EOF
+mkdir --parents /tmp/kustomize_$kustomize_version
+curl --silent --show-error --location --fail \
+	--output /tmp/kustomize_$kustomize_version/kustomize.tar.gz \
+	https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$kustomize_version/kustomize_${kustomize_version}_linux_amd64.tar.gz
+tar --extract --gzip --file=/tmp/kustomize_$kustomize_version/kustomize.tar.gz --directory=/tmp/kustomize_$kustomize_version
+cp /tmp/kustomize_$kustomize_version/kustomize /usr/local/bin/kustomize
+chmod 755 /usr/local/bin/kustomize
+rm --recursive --force /tmp/kustomize_$kustomize_version
+EOF
+##endregion
+
+ARG k9s_version
+RUN <<EOF
+mkdir --parents /tmp/k9s_$k9s_version
+curl --silent --show-error --location --fail \
+	--output /tmp/k9s_$k9s_version/k9s.tar.gz \
+	https://github.com/derailed/k9s/releases/download/$k9s_version/k9s_Linux_x86_64.tar.gz
+tar --extract --gzip --file=/tmp/k9s_$k9s_version/k9s.tar.gz --directory=/tmp/k9s_$k9s_version
+cp /tmp/k9s_$k9s_version/k9s /usr/local/bin/k9s
+chmod 755 /usr/local/bin/k9s
+rm --recursive --force /tmp/k9s_$k9s_version
+EOF
