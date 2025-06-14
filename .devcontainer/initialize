@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "$(uname -s)" = 'Darwin' ]; then
+	cat <<- EOF > .devcontainer/.generated-init.env
+		CONTAINER_USERNAME=$(whoami)
+		CONTAINER_UID=$(id -u)
+		CONTAINER_GID=$(id -g)
+		CONTAINER_DOCKER_GID=$(dscl . -read /Groups/docker | awk '($1 == "PrimaryGroupID:") { print $2 }')
+	EOF
+else
+	cat <<- EOF > .devcontainer/.generated-init.env
+		CONTAINER_USERNAME=$(whoami)
+		CONTAINER_UID=$(id --user)
+		CONTAINER_GID=$(id --group)
+		CONTAINER_DOCKER_GID=$(getent group docker | cut --delimiter=':' --fields=3)
+	EOF
+fi

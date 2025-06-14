@@ -1,0 +1,12 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "containerUser": "${localEnv:USER:root}",
+  "remoteUser": "${localEnv:USER:root}",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "initializeCommand": "${localWorkspaceFolder}/.devcontainer/initialize",
+  "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.generated-init.env"]
+}
