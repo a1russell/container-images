@@ -169,6 +169,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
+          build-contexts: |
+            docker_cli=docker-image://a1russell/container-image-dev-ubuntu:latest
           context: ./src
           target: docker
           push: true

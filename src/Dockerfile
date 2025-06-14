@@ -3,6 +3,7 @@
 ARG git_plus_version=v0.4.10
 ARG starship_version=v1.23.0
 ARG k0s_version=v1.33.1+k0s.1
+ARG k0sctl_version=v0.25.1
 ARG skaffold_version=v2.16.0
 ARG kustomize_version=v5.6.0
 ARG k9s_version=v0.50.6
@@ -233,6 +234,14 @@ EOF
 COPY --chmod=755 files/usr/local/bin/kubectl /usr/local
 COPY --chmod=644 files/sbin/k0s.sh /sbin/
 RUN ln --symbolic /sbin/k0s.sh /etc/entrypoint.d/48-k0s.sh
+
+ARG k0sctl_version
+RUN <<EOF
+curl --silent --show-error --location --fail \
+	--output /usr/local/bin/k0sctl \
+	https://github.com/k0sproject/k0sctl/releases/download/$k0sctl_version/k0sctl-linux-amd64
+chmod 755 /usr/local/bin/k0sctl
+EOF
 
 ARG skaffold_version
 RUN <<EOF

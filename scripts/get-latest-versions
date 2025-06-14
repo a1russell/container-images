@@ -28,6 +28,7 @@ fetch_latest_tag_grep() {
 echo git-plus; fetch_latest_tag https://github.com/tkrajina/git-plus.git 'v*'; echo
 echo starship; fetch_latest_github_release starship/starship; echo
 echo k0s; fetch_latest_github_release k0sproject/k0s; echo
+echo k0sctl; fetch_latest_github_release k0sproject/k0sctl; echo
 echo skaffold; fetch_latest_github_release GoogleContainerTools/skaffold; echo
 echo kustomize; \
   fetch_latest_tag_grep https://github.com/kubernetes-sigs/kustomize.git 'kustomize/v[0-9]+\.[0-9]+\.[0-9]+' \
