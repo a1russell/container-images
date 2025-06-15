@@ -60,6 +60,7 @@ RUN /usr/sbin/install_clean \
 	openssh-client \
 	ripgrep \
 	unrar \
+	unzip \
 	xclip \
 	xz-utils \
 	yadm \
@@ -254,6 +255,25 @@ COPY --chmod=644 files/sbin/dockerd-entrypoint.sh /sbin/
 COPY --chmod=755 files/sbin/dockerd-entrypoint /sbin/
 RUN ln --symbolic /sbin/dockerd-entrypoint.sh /etc/entrypoint.d/49-dockerd.sh
 CMD []
+
+FROM dev_base_image AS node
+
+RUN <<EOF
+curl --silent --show-error --fail --location \
+	https://fnm.vercel.app/install \
+| bash -s -- \
+	--install-dir /usr/local/bin \
+	--skip-shell
+chmod 755 /usr/local/bin/fnm
+EOF
+COPY files/etc/zsh/zprofile.d/50--fnm.zsh /etc/zsh/zprofile.d/50--fnm.zsh
+COPY files/root/.zprofile.d/50--fnm.zsh /root/.zprofile.d/50--fnm.zsh
+RUN mkdir /var/lib/fnm
+RUN mkdir /var/lib/fnm/aliases
+RUN <<EOF
+eval "$(fnm env --fnm-dir=/var/lib/fnm --use-on-cd --shell bash)"
+fnm install --lts
+EOF
 
 FROM docker_cli AS k8s
 
