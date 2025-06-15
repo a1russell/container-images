@@ -73,6 +73,52 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 
 RUN mkdir --parents /etc/entrypoint.d
 
+RUN mkdir --parents /etc/zsh/zprofile.d
+RUN <<EOF
+cat <<'EOF_' >> /etc/zsh/zprofile
+if [ "$(( ls /etc/zsh/zprofile.d/*.zsh ) 2> /dev/null | wc --lines)" -gt '0' ]; then
+	for f in /etc/zsh/zprofile.d/*.zsh; do
+		. "$f"
+	done
+fi
+
+EOF_
+EOF
+
+COPY files/etc/zsh/zprofile.d/01--profile.zsh /etc/zsh/zprofile.d/
+
+RUN mkdir --parents /etc/zsh/zshrc.d
+COPY files/etc/zsh/zshrc /tmp/
+RUN <<EOF
+echo >> /etc/zsh/zshrc
+cat /tmp/zshrc >> /etc/zsh/zshrc
+rm /tmp/zshrc
+EOF
+
+ENV ZNAP_HOME=/opt/zsh-snap
+COPY files/opt/zsh-snap/ /opt/zsh-snap
+COPY files/etc/zsh/zshrc.d/01--znap-repos.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/02--znap.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/03--znap-plugins.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/50--bindkey.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/50--history.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/50--prompt.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/80--aliases.zsh /etc/zsh/zshrc.d/
+
+RUN <<EOF
+zsh <<EOI
+. /etc/zsh/zshrc.d/01--znap-repos.zsh
+. /etc/zsh/zshrc.d/02--znap.zsh
+
+# For fast install, clone plugins in parallel.
+# This is an optimization. It should be safe to remove this,
+#  at the cost of speed.
+znap clone \
+	Aloxaf/fzf-tab \
+	zsh-users/{zsh-autosuggestions,zsh-syntax-highlighting}
+EOI
+EOF
+
 RUN mkdir --mode=700 --parents /root/.ssh
 
 RUN mkdir /root/.profile.d
@@ -87,22 +133,25 @@ fi
 EOF_
 EOF
 
+RUN mkdir /root/.zprofile.d
+COPY files/root/.zprofile /root/
+
 ENV UV_TOOL_DIR=/usr/local/share/uv
 ENV UV_TOOL_BIN_DIR=/usr/local/bin
 RUN \
 	curl --silent --show-error --fail --location https://astral.sh/uv/install.sh \
 	| env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
-COPY files/root/.profile.d/uv.sh /root/.profile.d/uv.sh
+COPY files/root/.profile.d/50--uv.sh /root/.profile.d/50--uv.sh
 
 ARG git_plus_version
 RUN <<EOF
-. /root/.profile.d/uv.sh
+. /root/.profile.d/50--uv.sh
 uv tool install --no-managed-python --no-cache git-plus@$git_plus_version
 EOF
 
 COPY files/opt/git-subrepo /opt/git-subrepo
+COPY files/etc/zsh/zprofile.d/50--git-subrepo.zsh /etc/zsh/zprofile.d/
 RUN \
-	ln --symbolic /opt/git-subrepo/.rc /etc/profile.d/50--git-subrepo.sh; \
 	mkdir --parents /usr/local/share/man/man1; \
 	ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
 
@@ -117,22 +166,9 @@ RUN \
 	chmod 755 /usr/local/bin/starship; \
 	rm --recursive --force /tmp/starship_$starship_version
 
-RUN mkdir --parents /etc/zsh/zshrc.d
-COPY files/etc/zsh/zshrc.d/80--aliases.zsh /etc/zsh/zshrc.d/
-COPY files/etc/zsh/zshrc /tmp/
-RUN <<EOF
-echo >> /etc/zsh/zshrc
-cat /tmp/zshrc >> /etc/zsh/zshrc
-rm /tmp/zshrc
-EOF
-
-ENV ZNAP_HOME=/opt/zsh-snap
-COPY files/opt/zsh-snap/ /opt/zsh-snap
-COPY files/etc/zsh/zshrc.d/01--znap-repos.zsh /etc/zsh/zshrc.d/
-
 COPY --chmod=755 files/sbin/entrypoint /sbin/
 ENTRYPOINT ["/usr/bin/tini", "--", "/sbin/entrypoint"]
-CMD ["/bin/zsh"]
+CMD ["/bin/zsh", "--login"]
 
 FROM dev_base_image AS docker_cli
 
