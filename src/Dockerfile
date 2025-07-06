@@ -270,9 +270,12 @@ COPY files/etc/zsh/zprofile.d/50--fnm.zsh /etc/zsh/zprofile.d/50--fnm.zsh
 COPY files/root/.zprofile.d/50--fnm.zsh /root/.zprofile.d/50--fnm.zsh
 RUN mkdir /var/lib/fnm
 RUN mkdir /var/lib/fnm/aliases
-RUN <<EOF
-eval "$(fnm env --fnm-dir=/var/lib/fnm --use-on-cd --shell bash)"
-fnm install --lts
+RUN /usr/bin/env zsh <<-EOF
+	eval "$(fnm env --fnm-dir=/var/lib/fnm --use-on-cd --shell zsh)"
+	fnm install --lts
+	npm install --global corepack@latest
+	corepack enable pnpm
+	corepack install --global pnpm@latest
 EOF
 
 FROM docker_cli AS k8s
