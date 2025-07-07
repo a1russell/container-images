@@ -24,7 +24,8 @@ if [ \
 
 	# Add the container user.
 	addgroup --gid ${CONTAINER_GID} ${CONTAINER_USERNAME}
-	adduser --disabled-password --uid ${CONTAINER_UID} --gid ${CONTAINER_GID} ${CONTAINER_USERNAME}
+	adduser --disabled-password --uid ${CONTAINER_UID} --gid ${CONTAINER_GID} --shell /bin/zsh ${CONTAINER_USERNAME}
+	touch "/home/${CONTAINER_USERNAME}/.zshrc"
 
 	# Set the docker group gid, and add the container user to the docker group.
 	groupmod --gid ${CONTAINER_DOCKER_GID} docker
