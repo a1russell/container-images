@@ -139,6 +139,12 @@ EOF
 RUN mkdir /root/.zprofile.d
 COPY files/root/.zprofile /root/
 
+RUN <<-'EOF'
+	su - ubuntu <<-'EOI'
+		touch "$HOME/.zshrc"
+	EOI
+EOF
+
 ENV UV_TOOL_DIR=/usr/local/share/uv
 ENV UV_TOOL_BIN_DIR=/usr/local/bin
 RUN \
