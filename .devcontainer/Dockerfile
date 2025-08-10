@@ -35,6 +35,9 @@ if [ \
 	mkdir --parents "/home/${CONTAINER_USERNAME}/.ssh"
 	chown "${CONTAINER_UID}:${CONTAINER_GID}" "/home/${CONTAINER_USERNAME}/.ssh"
 	chmod 700 "/home/${CONTAINER_USERNAME}/.ssh"
+
+	# Link mise system tools.
+	/usr/sbin/mise_link_system_tools "${CONTAINER_USERNAME}"
 fi
 
 EOF
