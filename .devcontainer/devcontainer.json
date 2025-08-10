@@ -8,5 +8,8 @@
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "initializeCommand": "${localWorkspaceFolder}/.devcontainer/initialize",
-  "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.generated-init.env"]
+  "runArgs": [
+    "--env-file",
+    "${localWorkspaceFolder}/.devcontainer/.generated-init.env"
+  ]
 }
