@@ -1,0 +1,19 @@
+#!/bin/sh
+
+orig_stdin_tmpfile=$(mktemp)
+
+cat /dev/stdin > "$orig_stdin_tmpfile"
+
+# for all users
+getent passwd | while IFS=: read -r name password uid gid gecos home shell; do
+	# that own their home directory
+	if [ -d "$home" ] && [ "$(stat -c %u "$home")" = "$uid" ]; then
+		# that have a shell which is not equal to /bin/false or /usr/sbin/nologin
+		if [ ! -z "$shell" ] && [ "$shell" != "/bin/false" ] && [ "$shell" != "/usr/sbin/nologin" ]; then
+			# execute the command, passing through stdin
+			su - "$name" -c "$@" < "$orig_stdin_tmpfile"
+		fi
+	fi
+done
+
+rm "$orig_stdin_tmpfile"

@@ -34,13 +34,24 @@ ENV LC_ALL=C.UTF-8
 
 RUN printf "y\n" | unminimize
 
-# For dev tools.
-# ca-certificates: curl
-# python3: git-plus, installed via uv
+# Installation helper tools.
+# ca-certificates: for curl
+# curl: for various installations, e.g. mise
+# gpg: deb repos, e.g. mise
+# jq: for custom `mise_link_system_tools` script and potentially others
 RUN /usr/sbin/install_clean \
 	ca-certificates \
-	python3
+	curl \
+	gpg \
+	jq
 
+# For dev tools.
+# gpg-agent: mise
+RUN /usr/sbin/install_clean \
+	gpg-agent
+
+# Dev tools.
+# Duplicates from above steps are acceptable.
 RUN /usr/sbin/install_clean \
 	bzip2 \
 	bzip2-doc \
@@ -146,18 +157,28 @@ RUN <<-'EOF'
 	EOI
 EOF
 
-ENV UV_TOOL_DIR=/usr/local/share/uv
-ENV UV_TOOL_BIN_DIR=/usr/local/bin
-RUN \
+COPY --chmod=755 files/usr/sbin/for_all_users /usr/sbin/
+
+RUN <<-'EOF'
+	curl --silent --show-error --fail --location https://mise.jdx.dev/gpg-key.pub \
+		| gpg --dearmor --output /etc/apt/keyrings/mise-archive-keyring.gpg -
+	chmod 644 /etc/apt/keyrings/mise-archive-keyring.gpg
+	mkdir --parents /etc/mise
+EOF
+COPY files/etc/apt/sources.list.d/mise.list /etc/apt/sources.list.d/mise.list
+RUN /usr/sbin/install_clean --install-recommends mise
+COPY files/etc/zsh/zprofile.d/50--mise.zsh /etc/zsh/zprofile.d/
+COPY --chmod=755 files/usr/sbin/mise_use_system_tool /usr/sbin/
+COPY --chmod=755 files/usr/sbin/mise_link_system_tools /usr/sbin/
+
+RUN <<-'EOF' bash
+	/usr/sbin/mise_use_system_tool python@3
 	curl --silent --show-error --fail --location https://astral.sh/uv/install.sh \
-	| env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
-COPY files/root/.profile.d/50--uv.sh /root/.profile.d/50--uv.sh
+		| env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
+EOF
 
 ARG git_plus_version
-RUN <<EOF
-. /root/.profile.d/50--uv.sh
-uv tool install --no-managed-python --no-cache git-plus@$git_plus_version
-EOF
+RUN /usr/sbin/mise_use_system_tool pipx:git-plus@$git_plus_version
 
 COPY files/opt/git-subrepo /opt/git-subrepo
 COPY files/etc/zsh/zprofile.d/50--git-subrepo.zsh /etc/zsh/zprofile.d/
@@ -267,24 +288,14 @@ CMD []
 
 FROM dev_base_image AS node
 
-RUN <<EOF
-curl --silent --show-error --fail --location \
-	https://fnm.vercel.app/install \
-| bash -s -- \
-	--install-dir /usr/local/bin \
-	--skip-shell
-chmod 755 /usr/local/bin/fnm
-EOF
-COPY files/etc/zsh/zprofile.d/50--fnm.zsh /etc/zsh/zprofile.d/50--fnm.zsh
-COPY files/root/.zprofile.d/50--fnm.zsh /root/.zprofile.d/50--fnm.zsh
-RUN mkdir /var/lib/fnm
-RUN mkdir /var/lib/fnm/aliases
-RUN /usr/bin/env zsh <<-EOF
-	eval "$(fnm env --fnm-dir=/var/lib/fnm --use-on-cd --shell zsh)"
-	fnm install --lts
-	npm install --global corepack@latest
-	corepack enable pnpm
-	corepack install --global pnpm@latest
+RUN <<-'EOF'
+	/usr/sbin/mise_use_system_tool node@lts
+	/usr/sbin/mise_use_system_tool npm:corepack@latest
+	/usr/sbin/for_all_users /bin/bash <<-EOI
+		eval "\$(mise activate bash --shims)"
+		corepack enable pnpm
+		corepack install --global pnpm@latest
+	EOI
 EOF
 
 FROM docker_cli AS k8s

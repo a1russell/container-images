@@ -1,0 +1,22 @@
+#!/bin/sh
+
+target_user=$1
+
+for tool in $(
+	mise ls --json --global --current --installed \
+	| jq --raw-output \
+		'
+			to_entries[]
+			| select(.value[].source.path == "/etc/mise/config.toml")
+			| "\(.key)@\(.value[0].version)"
+		'
+); do
+	readlink --canonicalize $(mise where "$tool") > /tmp/mise_system_tool_path_to_link.txt
+	su - "$target_user" -c /bin/bash <<-EOI
+		eval "\$(mise activate bash --shims)"
+		mise link "$tool" \$(cat /tmp/mise_system_tool_path_to_link.txt)
+	EOI
+done
+
+rm /tmp/mise_system_tool_path_to_link.txt
+mise cache clear --quiet --yes

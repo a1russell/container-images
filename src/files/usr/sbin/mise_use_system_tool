@@ -1,0 +1,25 @@
+#!/bin/sh
+
+tool_with_version=$1
+
+tool=$(echo "$tool_with_version" | cut --delimiter='@' --fields=1)
+
+# install the tool at a system-level path: /usr/local/share/mise
+/bin/bash <<-EOI
+	export MISE_DATA_DIR=/usr/local/share/mise
+	eval "\$(mise activate bash --shims)"
+	mise use --path=/etc/mise/config.toml "$tool_with_version"
+	mise where "$tool_with_version" > /tmp/mise_system_tool_path_to_link.txt
+	mise tool "$tool" --active > /tmp/mise_system_tool_version.txt
+EOI
+
+/usr/sbin/for_all_users /bin/bash <<-EOI
+	eval "\$(mise activate bash --shims)"
+	mise link \
+		"${tool}@\$(cat /tmp/mise_system_tool_version.txt)" \
+		"\$(cat /tmp/mise_system_tool_path_to_link.txt)"
+EOI
+
+rm /tmp/mise_system_tool_path_to_link.txt
+rm /tmp/mise_system_tool_version.txt
+mise cache clear --quiet --yes
