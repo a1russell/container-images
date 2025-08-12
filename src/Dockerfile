@@ -32,6 +32,8 @@ FROM minimal_base_image AS dev_base_image
 
 ENV LC_ALL=C.UTF-8
 
+RUN printf "y\n" | unminimize
+
 # For dev tools.
 # ca-certificates: curl
 # python3: git-plus, installed via uv
