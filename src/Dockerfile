@@ -100,6 +100,7 @@ EOF
 
 ENV ZNAP_HOME=/opt/zsh-snap
 COPY files/opt/zsh-snap/ /opt/zsh-snap
+RUN chmod --recursive g-w /opt/zsh-snap
 COPY files/etc/zsh/zshrc.d/01--znap-repos.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/02--znap.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/03--znap-plugins.zsh /etc/zsh/zshrc.d/
