@@ -2,8 +2,6 @@
 
 FROM a1russell/container-image-dev-ubuntu
 
-ENV EDITOR='code --wait'
-
 COPY .generated-init.env /etc/devcontainer-generated-init.env
 
 RUN <<EOF
