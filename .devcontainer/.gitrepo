@@ -6,7 +6,7 @@
 [subrepo]
 	remote = git@github.com:a1russell/container-image-devcontainer.git
 	branch = master
-	commit = a4eb1a786376ae5715d380bba0f1254abaada9fb
-	parent = 0b84b864dccbecc4e616549d42e38e52b1e9a36e
+	commit = 5c3d8b7131edbd42a123f160f0d204ba5d838058
+	parent = e7b0460e6ebfef57668ddfee197745cdb3db70c0
 	method = merge
 	cmdver = 0.4.9
