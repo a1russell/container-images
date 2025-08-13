@@ -116,6 +116,7 @@ COPY files/etc/zsh/zshrc.d/01--znap-repos.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/02--znap.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/03--znap-plugins.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/50--bindkey.zsh /etc/zsh/zshrc.d/
+COPY files/etc/zsh/zshrc.d/50--editor.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/50--history.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/50--prompt.zsh /etc/zsh/zshrc.d/
 COPY files/etc/zsh/zshrc.d/80--aliases.zsh /etc/zsh/zshrc.d/
