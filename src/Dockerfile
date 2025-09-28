@@ -2,11 +2,11 @@
 
 ARG git_plus_version=v0.4.10
 ARG starship_version=v1.23.0
-ARG k0s_version=v1.33.1+k0s.1
+ARG k0s_version=v1.33.4+k0s.0
 ARG k0sctl_version=v0.25.1
-ARG skaffold_version=v2.16.0
-ARG kustomize_version=v5.6.0
-ARG k9s_version=v0.50.6
+ARG skaffold_version=v2.16.1
+ARG kustomize_version=v5.7.1
+ARG k9s_version=v0.50.13
 
 FROM ubuntu:24.04 AS updated_ubuntu
 
